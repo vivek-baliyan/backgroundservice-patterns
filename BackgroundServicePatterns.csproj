@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <OutputType>Exe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <LangVersion>12.0</LangVersion>
@@ -10,7 +11,7 @@
     <Description>Production-ready patterns for .NET BackgroundServices that prevent silent failures, resource exhaustion, and monitoring blind spots.</Description>
     <Copyright>Copyright (c) 2025 BackgroundService Patterns</Copyright>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
-    <RepositoryUrl>https://github.com/your-username/backgroundservice-patterns</RepositoryUrl>
+    <RepositoryUrl>https://github.com/your-org/backgroundservice-patterns</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageTags>backgroundservice;patterns;dotnet;production;monitoring;health-checks</PackageTags>
   </PropertyGroup>

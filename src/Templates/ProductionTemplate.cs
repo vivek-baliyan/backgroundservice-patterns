@@ -33,6 +33,9 @@ public class ProductionBackgroundServiceTemplate : BackgroundService
         LoggerMessage.Define<int>(LogLevel.Information, new EventId(3, nameof(LogBatchProcessing)),
             "Processing batch of {Count} payments");
 
+    /// <summary>
+    /// Initializes a new instance of the ProductionBackgroundServiceTemplate.
+    /// </summary>
     public ProductionBackgroundServiceTemplate(
         IServiceScopeFactory scopeFactory,
         ILogger<ProductionBackgroundServiceTemplate> logger)
@@ -41,6 +44,9 @@ public class ProductionBackgroundServiceTemplate : BackgroundService
         _logger = logger;
     }
 
+    /// <summary>
+    /// Executes the background service with all production patterns implemented.
+    /// </summary>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         LogServiceStarted(_logger, null);
@@ -140,10 +146,22 @@ public class ProductionBackgroundServiceTemplate : BackgroundService
     }
 
     // Health check properties
+    /// <summary>
+    /// Gets the timestamp of the last successful processing run.
+    /// </summary>
     public DateTime LastSuccessfulRun => _lastSuccessfulRun;
+    /// <summary>
+    /// Gets the number of consecutive failures that have occurred.
+    /// </summary>
     public long ConsecutiveFailures => _consecutiveFailures;
+    /// <summary>
+    /// Gets a value indicating whether the service is currently healthy.
+    /// </summary>
     public bool IsHealthy => DateTime.UtcNow - _lastSuccessfulRun < TimeSpan.FromMinutes(10) && _consecutiveFailures < 5;
 
+    /// <summary>
+    /// Disposes of the service resources.
+    /// </summary>
     public override void Dispose()
     {
         _concurrencyLimiter?.Dispose();
@@ -152,8 +170,14 @@ public class ProductionBackgroundServiceTemplate : BackgroundService
 }
 
 // Extension method for easy registration
+/// <summary>
+/// Extension methods for registering background services.
+/// </summary>
 public static class BackgroundServiceExtensions
 {
+    /// <summary>
+    /// Adds a production background service with proper singleton registration.
+    /// </summary>
     public static IServiceCollection AddProductionBackgroundService<TService>(this IServiceCollection services)
         where TService : class, IHostedService
     {

@@ -16,6 +16,9 @@ public class SilentFailureHandler : BackgroundService
     private DateTime _lastSuccessfulRun = DateTime.UtcNow;
     private long _consecutiveFailures = 0;
 
+    /// <summary>
+    /// Initializes a new instance of the SilentFailureHandler.
+    /// </summary>
     public SilentFailureHandler(
         IServiceScopeFactory scopeFactory,
         ILogger<SilentFailureHandler> logger)
@@ -24,6 +27,9 @@ public class SilentFailureHandler : BackgroundService
         _logger = logger;
     }
 
+    /// <summary>
+    /// Executes the background service with proper exception handling.
+    /// </summary>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         _logger.LogInformation("Payment processor started");
@@ -74,5 +80,8 @@ public class SilentFailureHandler : BackgroundService
         }
     }
     
+    /// <summary>
+    /// Gets a value indicating whether the service is healthy based on the last successful run.
+    /// </summary>
     public bool IsHealthy => DateTime.UtcNow - _lastSuccessfulRun < TimeSpan.FromMinutes(10);
 }

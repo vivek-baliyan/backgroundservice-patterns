@@ -143,7 +143,7 @@ public class GracefulShutdownExample : BackgroundService
 
             try
             {
-                // Give active tasks up to 30 seconds to complete - using latest .NET 6+ pattern
+                // Give active tasks up to 30 seconds to complete - using latest .NET 8+ pattern
                 using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
                 await Task.WhenAll(tasksToWait).WaitAsync(timeoutCts.Token);
                 _logger.LogInformation("All active tasks completed gracefully");

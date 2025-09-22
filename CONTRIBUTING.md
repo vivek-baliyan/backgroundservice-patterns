@@ -39,7 +39,7 @@ All patterns should follow these principles:
 
 #### Code Style
 
-- Use file-scoped namespaces (C# 10+)
+- Use file-scoped namespaces (C# 12+)
 - Follow standard .NET naming conventions
 - Include comprehensive XML documentation
 - Use `ConfigureAwait(false)` for library code
@@ -73,14 +73,14 @@ Documentation contributions are always welcome:
 
 ### Prerequisites
 
-- .NET 6 SDK or later (.NET 8 LTS recommended)
+- .NET 8 SDK or later (.NET 8 LTS recommended)
 - IDE with C# support (Visual Studio, VS Code, Rider)
 
 ### Local Development
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/your-username/backgroundservice-patterns.git
+   git clone https://github.com/your-org/backgroundservice-patterns.git
    cd backgroundservice-patterns
    ```
 
