@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using BackgroundServicePatterns.Shared;
 
 namespace BackgroundServicePatterns.Templates;
 
@@ -20,6 +21,18 @@ public class ProductionBackgroundServiceTemplate : BackgroundService
     private DateTime _lastSuccessfulRun = DateTime.UtcNow;
     private long _consecutiveFailures = 0;
 
+    // High-performance logging with LoggerMessage (latest .NET pattern)
+    private static readonly Action<ILogger, Exception?> LogServiceStarted =
+        LoggerMessage.Define(LogLevel.Information, new EventId(1, nameof(LogServiceStarted)), "Background service started");
+
+    private static readonly Action<ILogger, long, Exception?> LogProcessingFailed =
+        LoggerMessage.Define<long>(LogLevel.Error, new EventId(2, nameof(LogProcessingFailed)),
+            "Processing failed, consecutive failures: {FailureCount}");
+
+    private static readonly Action<ILogger, int, Exception?> LogBatchProcessing =
+        LoggerMessage.Define<int>(LogLevel.Information, new EventId(3, nameof(LogBatchProcessing)),
+            "Processing batch of {Count} payments");
+
     public ProductionBackgroundServiceTemplate(
         IServiceScopeFactory scopeFactory,
         ILogger<ProductionBackgroundServiceTemplate> logger)
@@ -30,14 +43,14 @@ public class ProductionBackgroundServiceTemplate : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _logger.LogInformation("Background service started");
+        LogServiceStarted(_logger, null);
         
         while (!stoppingToken.IsCancellationRequested)
         {
             try
             {
                 using var scope = _scopeFactory.CreateScope();
-                await ProcessBatch(scope.ServiceProvider, stoppingToken);
+                await ProcessBatch(scope.ServiceProvider, stoppingToken).ConfigureAwait(false);
                 
                 _lastSuccessfulRun = DateTime.UtcNow;
                 _consecutiveFailures = 0;
@@ -50,14 +63,14 @@ public class ProductionBackgroundServiceTemplate : BackgroundService
             catch (Exception ex)
             {
                 _consecutiveFailures++;
-                _logger.LogError(ex, "Processing failed, consecutive failures: {FailureCount}", _consecutiveFailures);
+                LogProcessingFailed(_logger, _consecutiveFailures, ex);
                 
                 // Exponential backoff for repeated failures
                 var delayMs = Math.Min(300000, 5000 * Math.Pow(2, Math.Min(_consecutiveFailures - 1, 6)));
                 
                 try
                 {
-                    await Task.Delay(TimeSpan.FromMilliseconds(delayMs), stoppingToken);
+                    await Task.Delay(TimeSpan.FromMilliseconds(delayMs), stoppingToken).ConfigureAwait(false);
                 }
                 catch (OperationCanceledException)
                 {
@@ -67,7 +80,7 @@ public class ProductionBackgroundServiceTemplate : BackgroundService
             
             try
             {
-                await Task.Delay(5000, stoppingToken);
+                await Task.Delay(5000, stoppingToken).ConfigureAwait(false);
             }
             catch (OperationCanceledException)
             {
@@ -90,11 +103,11 @@ public class ProductionBackgroundServiceTemplate : BackgroundService
             return;
         }
 
-        _logger.LogInformation("Processing batch of {Count} payments", payments.Count);
+        LogBatchProcessing(_logger, payments.Count, null);
         
         var tasks = payments.Select(async payment =>
         {
-            await _concurrencyLimiter.WaitAsync(stoppingToken);
+            await _concurrencyLimiter.WaitAsync(stoppingToken).ConfigureAwait(false);
             try
             {
                 stoppingToken.ThrowIfCancellationRequested();
@@ -103,7 +116,7 @@ public class ProductionBackgroundServiceTemplate : BackgroundService
                 using var paymentScope = _scopeFactory.CreateScope();
                 var scopedPaymentService = paymentScope.ServiceProvider.GetRequiredService<IPaymentService>();
                 
-                await scopedPaymentService.ProcessPaymentAsync(payment.Id, stoppingToken);
+                await scopedPaymentService.ProcessPaymentAsync(payment.Id, stoppingToken).ConfigureAwait(false);
                 _logger.LogDebug("Processed payment {PaymentId}", payment.Id);
             }
             catch (OperationCanceledException)
@@ -122,7 +135,7 @@ public class ProductionBackgroundServiceTemplate : BackgroundService
             }
         });
         
-        await Task.WhenAll(tasks);
+        await Task.WhenAll(tasks).ConfigureAwait(false);
         _logger.LogInformation("Completed batch processing");
     }
 
@@ -148,20 +161,4 @@ public static class BackgroundServiceExtensions
         services.AddHostedService(provider => provider.GetRequiredService<TService>());
         return services;
     }
-}
-
-// Supporting interface
-public interface IPaymentService
-{
-    Task<List<Payment>> GetPendingPaymentsAsync(CancellationToken cancellationToken = default);
-    Task<List<Payment>> GetPendingPaymentsAsync(int maxCount, CancellationToken cancellationToken = default);
-    Task ProcessPaymentAsync(int paymentId, CancellationToken cancellationToken = default);
-}
-
-public class Payment
-{
-    public int Id { get; set; }
-    public string Status { get; set; } = "";
-    public decimal Amount { get; set; }
-    public DateTime CreatedAt { get; set; }
 }

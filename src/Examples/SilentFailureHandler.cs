@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using BackgroundServicePatterns.Shared;
 
 namespace BackgroundServicePatterns.Examples;
 
@@ -74,15 +75,4 @@ public class SilentFailureHandler : BackgroundService
     }
     
     public bool IsHealthy => DateTime.UtcNow - _lastSuccessfulRun < TimeSpan.FromMinutes(10);
-}
-
-public interface IPaymentService
-{
-    Task<List<Payment>> GetPendingPaymentsAsync(CancellationToken cancellationToken = default);
-    Task ProcessPaymentAsync(int paymentId, CancellationToken cancellationToken = default);
-}
-
-public class Payment
-{
-    public int Id { get; set; }
 }
